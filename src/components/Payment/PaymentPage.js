@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Container, Typography, Card, Button, Dialog, IconButton, useTheme, Link } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocalCafeIcon from "@mui/icons-material/LocalCafe";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useOrders } from "../../context/OrderContext";
 
 // Background animation components
 const FloatingCircle = ({ delay }) => (
@@ -56,9 +57,59 @@ const BuyMeCoffeeButton = ({ onClick }) => (
 const PaymentPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { getTotalPrice } = useCart();
+  const { getTotalPrice, cart, clearCart } = useCart();
+  const { addOrder } = useOrders();
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [coffeeDialogOpen, setCoffeeDialogOpen] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+
+  // Debug log to check cart contents
+  useEffect(() => {
+    console.log('Current cart:', cart);
+  }, [cart]);
+
+  const handlePayment = () => {
+    if (!cart || cart.length === 0) {
+      console.log('Cart is empty, cannot process payment');
+      return;
+    }
+
+    console.log('Starting payment process');
+    console.log('Cart contents:', cart);
+    console.log('Total price:', getTotalPrice());
+
+    // Simulate payment process
+    setQrDialogOpen(true);
+    setTimeout(() => {
+      setQrDialogOpen(false);
+      setPaymentComplete(true);
+      
+      // Create the order object
+      const orderData = {
+        tableNumber: localStorage.getItem('tableNumber') || '1',
+        items: cart.map(item => ({
+          name: item.name || item.title,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total: getTotalPrice(),
+      };
+      
+      console.log('Submitting order:', orderData);
+      
+      // Add order to admin system
+      addOrder(orderData);
+      console.log('Order added to admin system');
+
+      // Clear the cart
+      clearCart();
+
+      // Show success message and redirect
+      setTimeout(() => {
+        navigate('/admin');
+      }, 2000);
+    }, 2000);
+  };
 
   const containerVariants = {
     initial: { opacity: 0, y: 20 },
@@ -140,6 +191,7 @@ const PaymentPage = () => {
           <Button
             variant="contained"
             fullWidth
+            onClick={handlePayment}
             sx={{
               mt: 2,
               backgroundColor: "#FF4B3A",
@@ -150,13 +202,8 @@ const PaymentPage = () => {
                 transform: "translateY(-2px)",
                 boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
               },
-              transition: "all 0.3s ease",
-            }}
-            component={motion.button}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setQrDialogOpen(true)}>
-            Pay Now with GPay
+            }}>
+            Pay Now
           </Button>
 
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
@@ -232,6 +279,18 @@ const PaymentPage = () => {
           </motion.div>
         </Dialog>
       </motion.div>
+
+      {/* Payment Success Dialog */}
+      <Dialog open={paymentComplete}>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h5" gutterBottom>
+            Payment Successful!
+          </Typography>
+          <Typography>
+            Your order has been sent to the kitchen. Please wait while we prepare your food.
+          </Typography>
+        </Box>
+      </Dialog>
     </Container>
   );
 };
