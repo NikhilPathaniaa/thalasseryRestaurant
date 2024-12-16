@@ -1,5 +1,5 @@
 # Thalassery Restaurant - Modern React Food Ordering App
-
+wow
 ![Thalassery Restaurant](public/logo.png)
 
 A modern, responsive food ordering application built with React, Material-UI, and Framer Motion. Experience the authentic taste of Kerala cuisine with our beautiful user interface and smooth animations.
